@@ -4,6 +4,7 @@
 #include "Chessboard.h"
 #include "Pawn.h"
 
+
 Knight* knight;
 Chessboard* chessboard;
 list<Square> pawnsList;
@@ -15,7 +16,7 @@ void ReadFile(const string file_path){
     ifstream file(file_path);
 
     if(!file){
-        cerr << "Specified file does not exist!";
+        cerr << "Specified file does not exist!\n";
         exit(10);
     }
 
@@ -61,10 +62,15 @@ void SolveDFS(int depth, list<Square> path, int newX, int newY, list<Square> paw
     //if all pawns are eliminated, and path size is smaller than OPTIMAL price, set the new OPTIMAL price
     if (pawnsAlive.empty()){
         if (path.size() < OPTIMAL_PRICE) {
-            OPTIMAL_PRICE = path.size();
-            OPTIMAL_PATH = path;
-            cout << "New optimal price found: " << OPTIMAL_PRICE - 1 << endl;
-            return;
+            //critical section - a part of a parallel block that can only performed by one thread at a time
+            #pragma omp critical
+            {
+                if (path.size() < OPTIMAL_PRICE) {
+                    OPTIMAL_PRICE = path.size();
+                    OPTIMAL_PATH = path;
+                    cout << "New optimal price found: " << OPTIMAL_PRICE - 1 << endl;
+                }
+            }
         }
         return;
     }
@@ -87,28 +93,52 @@ void SolveDFS(int depth, list<Square> path, int newX, int newY, list<Square> paw
 
     //recursively run through all possible jumps
     for (Square jump : possibleJumps){
-        SolveDFS(depth+1, path, jump.GetX(), jump.GetY(), pawnsAlive);
+        //if actual path is shorter than 4, run recursion as a parallel task, otherwise run recursion sequentially
+        if (path.size() < 4){
+            #pragma omp task
+            SolveDFS(depth + 1, path, jump.GetX(), jump.GetY(), pawnsAlive);
+        } else {
+            SolveDFS(depth + 1, path, jump.GetX(), jump.GetY(), pawnsAlive);
+        }
     }
 }
 
 
-int main() {
+int main(int argc, char* argv[]) {
     knight = new Knight();
     chessboard = new Chessboard();
     list<Square> path;
+    string file;
+
+    //specify the input data file as a command line argument
+    if (argc > 1) {
+        file = argv[1];
+    } else {
+        cout << "Please specify the input data file!" << endl;
+        return 10;
+    }
 
     //read the input from the data file
-    ReadFile("kun01.txt");
+    ReadFile("examples/" + file);
 
-    //start the recursion with the initial position of Knight
-    SolveDFS(0, path, knight->GetSquare().GetX(), knight->GetSquare().GetY(), pawnsList);
+    //start the execution time stopwatch
+    clock_t tStart = clock();
 
-    //print the optimal price obtained and the optimal path
+    #pragma omp parallel
+    {
+    	//start the recursion with the initial position of Knight inside a parallel region on a single thread
+    	#pragma omp single
+        	SolveDFS(0, path, knight->GetSquare().GetX(), knight->GetSquare().GetY(), pawnsList);
+    }
+
+    //print the execution time of algorithm, optimal price obtained and the optimal path
     cout << "------------------------------" << endl;
+    printf("Execution time: %.2fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
     cout << "OPTIMAL PRICE: "<< OPTIMAL_PRICE -1 << endl;
     cout << "PATH: ";
     for (auto p : OPTIMAL_PATH)
         cout << "(" << p.GetX() << "," << p.GetY() << ") ";
+    cout << "\n";
 
     return 0;
 }
