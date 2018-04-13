@@ -15,17 +15,19 @@ class Square {
 private:
     int x, y;
     int value = 0;
+    int sDepth = 0;
     int pawnDistance = INT_MAX;
 
 public:
     void SetSquare(int, int);
     void SetValue(int);
+    void SetDepth(int);
     void SetPawnDistance(list<Square>);
     int GetX();
     int GetY();
     int GetValue();
     int GetPawnDistance();
-
+    int GetDepth();
 };
 
 

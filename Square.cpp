@@ -27,6 +27,11 @@ void Square::SetPawnDistance(list<Square> pawns){
     }
 }
 
+void Square::SetDepth(int dpth) {
+    this->sDepth = dpth;
+}
+
 int Square::GetX() { return x; }
 int Square::GetY() { return y; }
 int Square::GetValue() { return value; }
+int Square::GetDepth() { return sDepth; }

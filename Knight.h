@@ -16,7 +16,7 @@ public:
     void SetSquare(int, int);
     Square GetSquare();
     bool IsNextValid(int nextX, int nextY, int size);
-    list<Square> PossibleJumps(int x, int y, int size);
+    deque<Square> PossibleJumps(int x, int y, int size);
 
 
 };

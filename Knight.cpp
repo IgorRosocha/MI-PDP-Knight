@@ -2,6 +2,7 @@
 // Created by Igor R on 3/1/18.
 //
 
+#include <deque>
 #include "Knight.h"
 
 bool Knight::IsNextValid(int nextX, int nextY, int size)
@@ -22,8 +23,8 @@ void Knight::SetSquare(int x, int y)
 
 Square Knight::GetSquare() { return this->square; }
 
-std::list<Square> Knight::PossibleJumps(int x, int y, int size){
-    std::list<Square> nextSquaresList;
+std::deque<Square> Knight::PossibleJumps(int x, int y, int size){
+    std::deque<Square> nextSquaresList;
     Square nextSquare;
 
     if (IsNextValid(x + 2, y + 1, size)){
